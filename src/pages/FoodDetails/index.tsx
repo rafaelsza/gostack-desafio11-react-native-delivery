@@ -55,7 +55,9 @@ interface Food {
   name: string;
   description: string;
   price: number;
+  category: number;
   image_url: string;
+  thumbnail_url: string;
   formattedPrice: string;
   extras: Extra[];
 }
@@ -87,6 +89,14 @@ const FoodDetails: React.FC = () => {
           return { ...extra, quantity: 0 };
         }),
       );
+
+      const { data: favorite } = await api.get<Food[]>('/favorites', {
+        params: {
+          id: idFood,
+        },
+      });
+
+      setIsFavorite(favorite.length !== 0);
     }
 
     loadFood();
@@ -132,8 +142,23 @@ const FoodDetails: React.FC = () => {
     setFoodQuantity(state => (state === 1 ? state : state - 1));
   }
 
-  const toggleFavorite = useCallback(() => {
+  const toggleFavorite = useCallback(async () => {
     // Toggle if food is favorite or not
+    if (isFavorite) {
+      await api.delete(`/favorites/${food.id}`);
+    } else {
+      await api.post('/favorites', {
+        id: food.id,
+        name: food.name,
+        description: food.description,
+        price: food.price,
+        category: food.category,
+        image_url: food.image_url,
+        thumbnail_url: food.thumbnail_url,
+      });
+    }
+
+    setIsFavorite(state => !state);
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
@@ -149,14 +174,13 @@ const FoodDetails: React.FC = () => {
 
   async function handleFinishOrder(): Promise<void> {
     // Finish the order and save on the API
-    /* console.log({ ...food, extras });
-    const response = await api.post('/orders', {
+    await api.post('/orders', {
       ...food,
       product_id: food.id,
       extras,
     });
 
-    Alert.alert('Cadastrado com sucesso!'); */
+    Alert.alert('Cadastrado com sucesso!');
   }
 
   // Calculate the correct icon name

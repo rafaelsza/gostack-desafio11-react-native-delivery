@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import api from '../../services/api';
 import formatValue from '../../utils/formatValue';
@@ -30,19 +31,19 @@ interface Food {
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Food[]>([]);
 
-  useEffect(() => {
-    async function loadOrders(): Promise<void> {
-      const response = await api.get<Food[]>('/orders');
+  const loadOrders = useCallback(async () => {
+    const response = await api.get<Food[]>('/orders');
 
-      const formattedFoods = response.data.map(food => {
-        return { ...food, formattedValue: formatValue(food.price) };
-      });
+    const formattedFoods = response.data.map(food => {
+      return { ...food, formattedValue: formatValue(food.price) };
+    });
 
-      setOrders(formattedFoods);
-    }
-
-    loadOrders();
+    setOrders(formattedFoods);
   }, []);
+
+  useFocusEffect(() => {
+    loadOrders();
+  });
 
   return (
     <Container>
